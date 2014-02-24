@@ -59,7 +59,6 @@ class EpoxyTest(TestCase):
     request.user = self.user
 
     result = Epoxy(request)
-    print result.response['meta']
     self.assertEqual(True, True)
 
 
@@ -68,5 +67,4 @@ class EpoxyTest(TestCase):
     request.user = self.user
     result = Epoxy(request)
     #result.throwerror('')
-    print result.json()
     self.assertEqual(True, True)
