@@ -4,7 +4,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.forms import ModelForm
 from django.forms.models import model_to_dict
 
-from glue import Epoxy, API_EXCEPTION_AUTH, API_EXCEPTION_FORMERRORS, API_EXCEPTION_DOESNOTEXIST
+from glue import Epoxy, API_EXCEPTION_AUTH, API_EXCEPTION_FORMERRORS, API_EXCEPTION_DOESNOTEXIST, API_EXCEPTION_ATTRIBUTEERROR
 
 
 def index(request):
@@ -32,7 +32,7 @@ def get_objects(request, app_name, model_name):
   try:
     mod = get_model(app_name, model_name)
   except AttributeError, e:
-    return result.throw_error(error='model "%s" not found' % model_name, code='AttributeError')
+    return result.throw_error(error='model "%s" not found' % model_name, code=API_EXCEPTION_ATTRIBUTEERROR)
   
   if result.is_POST():
     class ObjForm(ModelForm):
@@ -43,7 +43,7 @@ def get_objects(request, app_name, model_name):
     form = ObjForm(request.REQUEST)
     if form.is_valid():
       item = form.save(commit=False)
-      result.add('item', item.json())
+      result.add('item', item.json() if hasattr(item, 'json') else model_to_dict(item))
       item.save()
     else:
       return result.throw_error(error=form.errors, code=API_EXCEPTION_FORMERRORS).json()
@@ -58,8 +58,12 @@ def get_objects(request, app_name, model_name):
   return result.json()
 
 
+
 @staff_member_required
 def get_object(request, app_name, model_name, pk):
+  '''
+  This is for debug purposes only. Please provide specific api method inside your own app.api.py file.
+  '''
   result = Epoxy(request)
   mod = get_model(app_name, model_name)
   try:
@@ -90,6 +94,28 @@ def get_object(request, app_name, model_name, pk):
     result.item(obj)
 
   return result.json()
+
+
+
+@staff_member_required
+def get_object_m2m(request, app_name, model_name, pk, m2m_name):
+  '''
+  This is for debug purposes only. Please provide specific api method inside your own app.api.py file.
+  '''
+  result = Epoxy(request)
+  mod = get_model(app_name, model_name)
+  try:
+    obj = mod.objects.get(pk=pk)
+    result.item(obj)
+    result.add('objects', [model_to_dict(i) for i in getattr(obj, m2m_name).all()])
+  except mod.DoesNotExist, e:
+    return Epoxy.error(request, message="%s" % e, code=API_EXCEPTION_DOESNOTEXIST)
+  except AttributeError, e:
+    return Epoxy.error(request, message="%s" % e, code=API_EXCEPTION_DOESNOTEXIST)
+
+  return result.json()
+
+
 
 
 def edit_object(instance, Form, request):

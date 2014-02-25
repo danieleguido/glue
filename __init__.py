@@ -7,6 +7,7 @@ from django.forms import IntegerField
 from django.core import serializers
 from operator import and_
 from django.db.models import Q
+from django.forms.models import model_to_dict
 
 from glue.forms import OffsetLimitForm
 
@@ -28,6 +29,7 @@ API_EXCEPTION_INCOMPLETE  =  'Incomplete'
 API_EXCEPTION_EMPTY      =  'Empty'
 API_EXCEPTION_INVALID    =  'Invalid'
 API_EXCEPTION_OSERROR    =  'OsError'
+API_EXCEPTION_ATTRIBUTEERROR = 'AttributeError'
 
 #
 #    MISC FUNCTIONS
@@ -203,7 +205,7 @@ class Epoxy:
 
   def item( self, item, deep=False):
     self.response['meta']['model'] = '%s' % item.__class__.__name__
-    self.response['object'] = item.json( deep=deep )
+    self.response['object'] = item.json( deep=deep ) if hasattr(item, 'json') else model_to_dict(item)
     return self
 
 
@@ -242,11 +244,12 @@ class Epoxy:
     
     # "easier to ask for forgiveness than permission" (EAFP) rather than "look before you leap" (LBYL)
     try:
-      self.response['objects'] = [ o.json() for o in qs ]
-
+      self.response['objects'] = [o.json() for o in qs]
     except AttributeError, e:
+      self.response['objects'] = [model_to_dict(o) for o in qs]
+    except Exception, e:
       self.warning( 'objects', "Exception: %s" % e )
-      self.response['objects'] = []#serializers.serialize(**kwargs)
+      self.response['objects'] = [ ]#serializers.serialize(**kwargs)
 
     #except Exception, e:
     #  return self.throw_error( error="Exception: %s" % e, code=API_EXCEPTION_INVALID )
@@ -256,8 +259,8 @@ class Epoxy:
 
   def json( self, mimetype="application/json" ):
     if self.request is not None and self.request.REQUEST.has_key('indent'):
-      return HttpResponse( json.dumps( self.response, indent=4),  content_type=mimetype)
-    return HttpResponse( json.dumps( self.response ), content_type=mimetype)
+      return HttpResponse(json.dumps(self.response, default=Epoxy.encoder, indent=4),  content_type=mimetype)
+    return HttpResponse(json.dumps(self.response, default=Epoxy.encoder), content_type=mimetype)
 
 
   def add( self, key, value, jsonify=False):
@@ -276,6 +279,14 @@ class Epoxy:
     self.response[ 'code' ] = code
 
     return self
+
+  
+  @staticmethod
+  def encoder(obj):
+    if hasattr(obj, 'isoformat'):
+      return obj.isoformat()
+    else:
+        raise TypeError, 'Object of type %s with value of %s is not JSON serializable' % (type(obj), repr(obj))
 
 
   @staticmethod
