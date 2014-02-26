@@ -7,6 +7,7 @@ from django.forms.models import model_to_dict
 from glue import Epoxy, API_EXCEPTION_AUTH, API_EXCEPTION_FORMERRORS, API_EXCEPTION_DOESNOTEXIST, API_EXCEPTION_ATTRIBUTEERROR
 
 
+
 def index(request):
   '''
   Help or manual should be placed here
@@ -15,11 +16,13 @@ def index(request):
   return result.json()
 
 
+
 def access_denied(request):
   '''
   Denial of access if user ios not staff.
   '''
   return Epoxy.error(request, message='access denied');
+
 
 
 @staff_member_required

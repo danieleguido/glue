@@ -205,7 +205,7 @@ class Epoxy:
 
   def item( self, item, deep=False):
     self.response['meta']['model'] = '%s' % item.__class__.__name__
-    self.response['object'] = item.json( deep=deep ) if hasattr(item, 'json') else model_to_dict(item)
+    self.response['object'] = item.json(deep=deep) if hasattr(item, 'json') else model_to_dict(item)
     return self
 
 
@@ -268,7 +268,7 @@ class Epoxy:
     return value
 
 
-  def meta( self, key, value ):
+  def meta(self, key, value):
     self.response['meta'][ key ] = value
     return value
 
