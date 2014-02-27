@@ -91,6 +91,7 @@ class Epoxy:
     self.limit = API_DEFAULT_LIMIT
     self.offset = API_DEFAULT_OFFSET
     self.order_by = []
+    self.data = {} # data coming from REST and/or REQUEST
     self.process()
 
   def warning( self, key, message ):
@@ -115,6 +116,15 @@ class Epoxy:
     self.response['meta'] = {}
     self.response['meta']['action'] = whosdaddy(3)
     self.response['meta']['user'] = self.request.user.username
+
+    if len(self.request.body):
+      try:
+        self.data = json.loads(self.request.body)
+      except Exception, e:
+        self.warning( 'request payload error', "Exception: %s" % e )
+      else:
+        self.data.update(self.request.REQUEST)
+
     # understand method via REQUEST params only if desired.
     if self.method == 'GUESS':
 
