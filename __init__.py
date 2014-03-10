@@ -29,6 +29,7 @@ API_EXCEPTION_INCOMPLETE  =  'Incomplete'
 API_EXCEPTION_EMPTY      =  'Empty'
 API_EXCEPTION_INVALID    =  'Invalid'
 API_EXCEPTION_OSERROR    =  'OsError'
+API_EXCEPTION_HTTPERROR    = 'HTTPError'
 API_EXCEPTION_ATTRIBUTEERROR = 'AttributeError'
 
 #
@@ -117,13 +118,13 @@ class Epoxy:
     self.response['meta']['action'] = whosdaddy(3)
     self.response['meta']['user'] = self.request.user.username
 
-    if len(self.request.body):
-      try:
+    try:
+      if len(self.request.body):
         self.data = json.loads(self.request.body)
-      except Exception, e:
-        self.warning( 'request payload error', "Exception: %s" % e )
-      else:
-        self.data.update(self.request.REQUEST)
+    except Exception, e:
+      self.warning( 'request payload error', "Exception: %s" % e )
+    finally:
+      self.data.update(self.request.REQUEST)
 
     # understand method via REQUEST params only if desired.
     if self.method == 'GUESS':
@@ -256,6 +257,7 @@ class Epoxy:
     try:
       self.response['objects'] = [o.json() for o in qs]
     except AttributeError, e:
+      self.warning( 'objects', "Exception: %s" % e )
       self.response['objects'] = [model_to_dict(o) for o in qs]
     except Exception, e:
       self.warning( 'objects', "Exception: %s" % e )
