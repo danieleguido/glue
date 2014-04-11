@@ -37,9 +37,11 @@ API_EXCEPTION_ATTRIBUTEERROR = 'AttributeError'
 #    ==============
 #
 def whosdaddy( level=2 ):
-  return inspect.stack()[level][3]
+  act = inspect.stack()[level][3]
+  mod = re.search(r'(?P<module>[^/]+)/(?P<file>[^/\.]+)\.py', '%s'%inspect.stack()[level][1])# observer/api.py
 
-
+  return act if mod is None else '.'.join(mod.groups()+(act,))
+  
 
 #
 #    BIBTEX JSON PARSER
