@@ -247,7 +247,9 @@ class Epoxy:
     else:
       qs = queryset.filter()
 
-
+    if self.response['meta']['total_count']:
+      self.response['meta']['offset'] = self.offset
+      self.response['meta']['limit'] = self.response['meta']['total_count'] if self.response['meta']['total_count'] < self.offset + self.limit else self.limit
 
     # apply limits
     if self.limit > -1:
