@@ -150,7 +150,7 @@ class Epoxy:
       except Exception, e:
         self.warning( 'filters', "Exception: %s" % e )
       else:
-        # format filters having REDUCE__! add a magic dict
+        # format filters ending with __REDUCE:  add a magic dict
         reduces = []
         pop_fields = []
 
@@ -158,9 +158,13 @@ class Epoxy:
           if field.endswith('__REDUCE'):
             f = field[:-8]
             pop_fields.append(field)
-            reduces = reduces + [(f, i) for i in self.filters[field]]
+            if isinstance(self.filters[field], basestring):
+              reduces = reduces + [(f, self.filters[field])]
+            else:
+              reduces = reduces + [(f, i) for i in self.filters[field]]
         
         for i in pop_fields:
+          self.meta('reducing', i)
           self.filters.pop(i, None)
 
         #  reduces = [(u'tags__slug', u'sciences-po'), (u'tags__slug', u'2013')]
@@ -230,6 +234,7 @@ class Epoxy:
         queryset = queryset.filter( queryset.model.search(self.search) ).distinct()
 
     if self.reduce is not None:
+      self.meta('reduce', self.reduce)
       for r in self.reduce:
         queryset = queryset.filter(r)
         #queryset = queryset.filter(self.reduce)
