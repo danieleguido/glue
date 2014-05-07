@@ -224,7 +224,13 @@ class Epoxy:
 
   def queryset( self, queryset, model=None ):
     if self.search:
-      if not hasattr(queryset.model, "search"):
+      if hasattr(queryset.model, "indexed_search"):
+        self.meta( 'search', "using whoosh index model for the model %s" % queryset.model.__name__ )
+        self.response['meta']['model'] = queryset.model.__name__
+        # normally your model indexed search should provide totalcount, limit, offset. 
+        queryset.model.indexed_search(query=self.search, epoxy=self)
+        return self
+      elif not hasattr(queryset.model, "search"):
         self.warning( 'search', "Model %s has no method to perform your search" % queryset.model.__name__ )
       else:
         queryset = queryset.filter( queryset.model.search(self.search) ).distinct()
