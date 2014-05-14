@@ -30,35 +30,35 @@ def get_objects(request, app_name, model_name):
   '''
   This is for debug purposes only. Please provide specific api method inside your own app.api.py file.
   '''
-  result = Epoxy(request)
+  epoxy = Epoxy(request)
 
   try:
     mod = get_model(app_name, model_name)
   except AttributeError, e:
-    return result.throw_error(error='model "%s" not found' % model_name, code=API_EXCEPTION_ATTRIBUTEERROR)
+    return epoxy.throw_error(error='model "%s" not found' % model_name, code=API_EXCEPTION_ATTRIBUTEERROR)
   
-  if result.is_POST():
+  if epoxy.is_POST():
     class ObjForm(ModelForm):
       class Meta:
         model = mod
         exclude =()
 
-    form = ObjForm(request.REQUEST)
+    form = ObjForm(epoxy.data)
     if form.is_valid():
       item = form.save(commit=False)
-      result.add('item', item.json() if hasattr(item, 'json') else model_to_dict(item))
+      epoxy.add('item', item.json() if hasattr(item, 'json') else model_to_dict(item))
       item.save()
     else:
-      return result.throw_error(error=form.errors, code=API_EXCEPTION_FORMERRORS).json()
+      return epoxy.throw_error(error=form.errors, code=API_EXCEPTION_FORMERRORS).json()
   queryset = mod.objects.filter()
   
-  result.queryset(
+  epoxy.queryset(
     queryset,
     model=mod
   )
 
-  result.meta('module', '%s.%s' % (mod.__module__, mod.__name__))
-  return result.json()
+  epoxy.meta('module', '%s.%s' % (mod.__module__, mod.__name__))
+  return epoxy.json()
 
 
 
@@ -121,13 +121,23 @@ def get_object_m2m(request, app_name, model_name, pk, m2m_name):
 
 
 
-def edit_object(instance, Form, request):
+def edit_object(instance, Form, epoxy):
+  '''
+  usage:
+  def instanceapi(request):
+    epoxy = Epoxy(request)
+    # load the instance to be changed...
+    if epoxy.is_POST:
+      result, instance = edit_object(instance=instance, Form=InstanceModelForm)
+    if not result:
+      return epoxy.throw_error(error=instance, code=API_EXCEPTION_FORMERRORS).json()
+    instance.save()
+    return epoxy.item(instance, deep=True).json()
+  '''
   data = model_to_dict(instance)
-  data.update(request.REQUEST)
+  data.update(epoxy.data)
 
   form = Form(instance=instance, data=data)
   if form.is_valid():
     instance = form.save(commit=False)
-    return True, instance
-  return False, form.errors
-
+  return form
