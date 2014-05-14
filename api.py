@@ -130,3 +130,4 @@ def edit_object(instance, Form, request):
     instance = form.save(commit=False)
     return True, instance
   return False, form.errors
+
