@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.test import TestCase
 from django.test.client import RequestFactory
+from django.utils.translation import activate
 
 from glue import Epoxy
 
@@ -24,11 +25,12 @@ class FakeTest(TestCase):
   def test_get_fakes(self):
 
     request = self.factory.get('/customer/details')
+    request.LANGUAGE_CODE = 'en-us'
     request.user = self.user
     
     result = Epoxy(request).json()
 
-    self.assertEqual('%s' % result, 'Content-Type: application/json\r\n\r\n{"status": "ok", "meta": {"action": "test_get_fakes", "user": "jacob", "method": "GET"}}')
+    self.assertEqual('%s' % result, 'Content-Type: application/json\r\n\r\n{"status": "ok", "meta": {"action": "glue.tests.test_get_fakes", "user": "jacob", "language": "en-us", "method": "GET"}}')
 
 
 
@@ -46,7 +48,7 @@ class EpoxyTest(TestCase):
   def test_meta(self):
     request = self.factory.get('/glue/')
     request.user = self.user
-
+    request.LANGUAGE_CODE = 'en-us'
     result = Epoxy(request)
     result.meta('property', 'value')
     
@@ -57,7 +59,7 @@ class EpoxyTest(TestCase):
   def test_limits(self):
     request = self.factory.get('/glue/?limit=0&offset=50')
     request.user = self.user
-
+    request.LANGUAGE_CODE = 'en-us'
     result = Epoxy(request)
     self.assertEqual(True, True)
 
@@ -65,6 +67,7 @@ class EpoxyTest(TestCase):
   def test_error(self):
     request = self.factory.get('/glue')
     request.user = self.user
+    request.LANGUAGE_CODE = 'en-us'
     result = Epoxy(request)
     #result.throwerror('')
     self.assertEqual(True, True)
