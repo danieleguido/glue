@@ -119,7 +119,7 @@ class Epoxy:
     self.response['meta'] = {}
     self.response['meta']['action'] = whosdaddy(3)
     self.response['meta']['user'] = self.request.user.username
-
+    self.response['meta']['language'] = self.request.LANGUAGE_CODE
     try:
       if len(self.request.body):
         self.data = json.loads(self.request.body)
