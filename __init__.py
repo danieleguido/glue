@@ -84,7 +84,7 @@ class Epoxy:
   return Epoxy( request ).get_response( queryset=queryset )
 
   """
-  def __init__(self, request, method='GUESS' ):
+  def __init__(self, request, method='GUESS', verbose=False):
     self.request = request
     self.response = { 'status':'ok' } # a ditionary of things
     self.filters = {}
@@ -95,7 +95,7 @@ class Epoxy:
     self.offset = API_DEFAULT_OFFSET
     self.order_by = []
     self.data = {} # data coming from REST and/or REQUEST
-    self.process()
+    self.process(verbose=verbose)
 
   def warning( self, key, message ):
     if 'warnings' not in self.response['meta']:
@@ -115,11 +115,11 @@ class Epoxy:
     return self.method == 'DELETE'
 
 
-  def process( self ):
+  def process(self, verbose=False):
     self.response['meta'] = {}
     self.response['meta']['action'] = whosdaddy(3)
     self.response['meta']['user'] = self.request.user.username
-    self.response['meta']['language'] = self.request.LANGUAGE_CODE
+    self.response['meta']['language'] = self.request.LANGUAGE_CODE if self.request.LANGUAGE_CODE else None
 
     try:
       if len(self.request.body):
@@ -129,13 +129,15 @@ class Epoxy:
     finally:
       self.data.update(self.request.REQUEST)
 
+    if verbose:
+      self.meta('verbose', self.data)
     # understand method via REQUEST params only if desired.
     if self.method == 'GUESS':
 
       if 'method' in self.request.REQUEST: # simulation
         method = self.request.REQUEST.get('method')
         if method not in API_AVAILABLE_METHODS:
-          self.warning( 'order_by', "Method: %s is not available " % self.request.REQUEST.get('method') )
+          self.warning( 'method', "Method: %s is not available " % self.request.REQUEST.get('method') )
         else:
           self.response['meta']['method'] = method
           self.method = method
