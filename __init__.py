@@ -119,7 +119,7 @@ class Epoxy:
     self.response['meta'] = {}
     self.response['meta']['action'] = whosdaddy(3)
     self.response['meta']['user'] = self.request.user.username
-    self.response['meta']['language'] = self.request.LANGUAGE_CODE if self.request.LANGUAGE_CODE else None
+    self.response['meta']['language'] = self.request.LANGUAGE_CODE if 'LANGUAGE_CODE' in self.request else None
 
     try:
       if len(self.request.body):
