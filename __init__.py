@@ -85,7 +85,13 @@ class Epoxy:
 
   """
   def __init__(self, request, method='GUESS', verbose=False):
+    try:
+      self.payload = request.body
+    except:
+      self.payload = None
+      pass # print e
     self.request = request
+    
     self.response = { 'status':'ok' } # a ditionary of things
     self.filters = {}
     self.reduce = None
@@ -122,8 +128,9 @@ class Epoxy:
     self.response['meta']['language'] = self.request.LANGUAGE_CODE if 'LANGUAGE_CODE' in self.request else None
 
     try:
-      if len(self.request.body):
-        self.data = json.loads(self.request.body)
+      if self.payload:
+        self.data = json.loads(self.payload)
+
     except Exception, e:
       self.warning( 'request payload error', "Exception: %s" % e )
     finally:
