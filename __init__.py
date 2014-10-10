@@ -125,6 +125,7 @@ class Epoxy:
     self.response['meta'] = {}
     self.response['meta']['action'] = whosdaddy(3)
     self.response['meta']['user'] = self.request.user.username
+
     self.response['meta']['language'] = self.request.LANGUAGE_CODE if 'LANGUAGE_CODE' in self.request else None
 
     try:
@@ -136,8 +137,8 @@ class Epoxy:
     finally:
       self.data.update(self.request.REQUEST)
 
-    if verbose:
-      self.meta('verbose', self.data)
+    if 'verbose' in self.request.REQUEST:
+      self.meta('request', self.data)
     # understand method via REQUEST params only if desired.
     if self.method == 'GUESS':
 
@@ -242,7 +243,7 @@ class Epoxy:
         self.meta( 'search', "using whoosh index model for the model %s" % queryset.model.__name__ )
         self.response['meta']['model'] = queryset.model.__name__
         # normally your model indexed search should provide totalcount, limit, offset. 
-        queryset.model.indexed_search(query=self.search, epoxy=self)
+        queryset.model.indexed_search(query=self.search, epoxy=self, queryset=queryset)
         return self
       elif not hasattr(queryset.model, "search"):
         self.warning( 'search', "Model %s has no method to perform your search" % queryset.model.__name__ )
