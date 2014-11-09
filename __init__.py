@@ -315,7 +315,7 @@ class Epoxy:
     self.response[ 'status' ] = 'error'
     self.response[ 'error' ] = error
     self.response[ 'code' ] = code
-
+    self.response[ 'request' ] = self.data
     return self
 
   
